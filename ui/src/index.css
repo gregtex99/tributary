@@ -1,0 +1,22 @@
+@import "tailwindcss";
+
+/* Custom dark mode configuration */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* Stream colors */
+@theme {
+  --color-health: #4A9B7F;
+  --color-calendar: #5B8FB9;
+  --color-tasks: #6B7C8F;
+  --color-relationships: #D4956A;
+  --color-finance: #3D5A6C;
+}
+
+/* No scrollbar utility */
+.no-scrollbar::-webkit-scrollbar { 
+  display: none; 
+}
+.no-scrollbar { 
+  -ms-overflow-style: none; 
+  scrollbar-width: none; 
+}
