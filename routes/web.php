@@ -3,13 +3,17 @@
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Web\ActionItemPageController;
 use App\Http\Controllers\Web\DashboardPageController;
+use App\Http\Controllers\Web\MonitorController;
 use App\Http\Controllers\Web\NudgePageController;
 use App\Http\Controllers\Web\SettingsPageController;
 use Illuminate\Support\Facades\Route;
 
+// Public monitoring dashboard (token-protected)
+Route::get('/dashboard', MonitorController::class)->name('monitor');
+
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/', DashboardPageController::class)->name('dashboard');
-    Route::redirect('/dashboard', '/');
+    // /dashboard is now the public monitor route
 
     Route::get('/items', [ActionItemPageController::class, 'index'])->name('items.index');
     Route::get('/items/{item}', [ActionItemPageController::class, 'show'])->name('items.show');

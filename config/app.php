@@ -123,4 +123,11 @@ return [
         'store' => env('APP_MAINTENANCE_STORE', 'database'),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Monitor Dashboard Token
+    |--------------------------------------------------------------------------
+    */
+    'monitor_token' => env('MONITOR_TOKEN', '996f45c3db2fbcdb96a9f1a2102a1e33'),
+
 ];
