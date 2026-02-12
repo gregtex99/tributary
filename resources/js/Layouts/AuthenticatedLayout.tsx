@@ -33,6 +33,24 @@ export default function Authenticated({
                                 >
                                     Dashboard
                                 </NavLink>
+                                <NavLink
+                                    href={route('items.index')}
+                                    active={route().current('items.*')}
+                                >
+                                    Action Items
+                                </NavLink>
+                                <NavLink
+                                    href={route('nudges.index')}
+                                    active={route().current('nudges.*')}
+                                >
+                                    Nudge Queue
+                                </NavLink>
+                                <NavLink
+                                    href={route('settings.index')}
+                                    active={route().current('settings.*')}
+                                >
+                                    Settings
+                                </NavLink>
                             </div>
                         </div>
 
@@ -136,6 +154,24 @@ export default function Authenticated({
                             active={route().current('dashboard')}
                         >
                             Dashboard
+                        </ResponsiveNavLink>
+                        <ResponsiveNavLink
+                            href={route('items.index')}
+                            active={route().current('items.*')}
+                        >
+                            Action Items
+                        </ResponsiveNavLink>
+                        <ResponsiveNavLink
+                            href={route('nudges.index')}
+                            active={route().current('nudges.*')}
+                        >
+                            Nudge Queue
+                        </ResponsiveNavLink>
+                        <ResponsiveNavLink
+                            href={route('settings.index')}
+                            active={route().current('settings.*')}
+                        >
+                            Settings
                         </ResponsiveNavLink>
                     </div>
 
