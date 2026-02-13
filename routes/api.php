@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\ActionItemController;
 use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\NudgeController;
 use App\Http\Controllers\Api\RuleController;
+use App\Http\Controllers\Api\LinearWebhookController;
 use App\Http\Controllers\Api\SignalController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -15,6 +16,9 @@ Route::get('/health', function () {
         'timestamp' => now()->toIso8601String(),
     ]);
 });
+
+// Linear webhook — no auth (Linear signs webhooks, verified later if needed)
+Route::post('/webhooks/linear', LinearWebhookController::class);
 
 Route::middleware('api.token')->group(function () {
     Route::get('/user', function (Request $request) {
