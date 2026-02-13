@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Log;
 class LinearWebhookController extends Controller
 {
     private const GREG_USER_ID = '29012186-36e0-403c-bbae-b63688fae7bd';
-    private const DISCORD_CHANNEL_ID = '1466581983063707901';
+    private const DISCORD_CHANNEL_ID = '1471897266490052770';
 
     public function __invoke(Request $request)
     {
@@ -76,7 +76,7 @@ class LinearWebhookController extends Controller
         if ($type === 'Issue' && $action === 'remove') {
             $identifier = $data['identifier'] ?? 'Unknown';
             $title = $data['title'] ?? '';
-            return "📋 **Linear Update**\n🗑️ **{$identifier}** deleted: {$title}";
+            return "🗑️ **{$identifier}** deleted: {$title}";
         }
 
         return null;
@@ -87,19 +87,14 @@ class LinearWebhookController extends Controller
         $identifier = $data['issue']['identifier'] ?? 'Unknown';
         $title = $data['issue']['title'] ?? '';
         $body = $data['body'] ?? '';
+        $issueUrl = $this->getIssueUrl($identifier);
 
         // Truncate long comments
         if (mb_strlen($body) > 500) {
             $body = mb_substr($body, 0, 497) . '...';
         }
 
-        $msg = "📋 **Linear Update**\n💬 Greg commented on **{$identifier}**: {$title}\n\n> {$body}";
-
-        if ($url) {
-            $msg .= "\n\n<{$url}>";
-        }
-
-        return $msg;
+        return "💬 Greg commented on [**{$identifier}**](<{$issueUrl}>): {$title}\n\n> {$body}";
     }
 
     private function formatIssueUpdate(array $data, array $payload, ?string $url): string
@@ -141,14 +136,9 @@ class LinearWebhookController extends Controller
             return null;
         }
 
+        $issueUrl = $this->getIssueUrl($identifier);
         $changeStr = implode("\n", $changes);
-        $msg = "📋 **Linear Update**\n✏️ Greg updated **{$identifier}**: {$title}\n{$changeStr}";
-
-        if ($url) {
-            $msg .= "\n\n<{$url}>";
-        }
-
-        return $msg;
+        return "✏️ Greg updated [**{$identifier}**](<{$issueUrl}>): {$title}\n{$changeStr}";
     }
 
     private function formatIssueCreate(array $data, ?string $url): string
@@ -156,18 +146,20 @@ class LinearWebhookController extends Controller
         $identifier = $data['identifier'] ?? 'Unknown';
         $title = $data['title'] ?? '';
         $stateName = $data['state']['name'] ?? '';
+        $issueUrl = $this->getIssueUrl($identifier);
 
-        $msg = "📋 **Linear Update**\n🆕 Greg created **{$identifier}**: {$title}";
+        $msg = "🆕 Greg created [**{$identifier}**](<{$issueUrl}>): {$title}";
 
         if ($stateName) {
             $msg .= " [{$stateName}]";
         }
 
-        if ($url) {
-            $msg .= "\n\n<{$url}>";
-        }
-
         return $msg;
+    }
+
+    private function getIssueUrl(string $identifier): string
+    {
+        return "https://linear.app/absoluteio/issue/{$identifier}";
     }
 
     private function sendToDiscord(string $message): void
