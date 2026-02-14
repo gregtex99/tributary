@@ -11,6 +11,8 @@ class LinearWebhookController extends Controller
 {
     private const GREG_USER_ID = '29012186-36e0-403c-bbae-b63688fae7bd';
     private const DISCORD_CHANNEL_ID = '1471897266490052770';
+    private const DISCORD_TRINITY_CHANNEL_ID = '1466581983063707901';
+    private const COMMS_PROJECT_ID = 'c938600c-7a87-4ff1-898e-dcedac03f3d0';
 
     public function __invoke(Request $request)
     {
@@ -32,6 +34,11 @@ class LinearWebhookController extends Controller
 
         if (!$message) {
             return response()->json(['status' => 'ignored', 'reason' => 'uninteresting event']);
+        }
+
+        // Check for comms send approval (Comment on Communications project issue)
+        if ($type === 'Comment' && $action === 'create') {
+            $this->checkCommsSendApproval($data, $payload);
         }
 
         $this->sendToDiscord($message);
@@ -160,6 +167,69 @@ class LinearWebhookController extends Controller
     private function getIssueUrl(string $identifier): string
     {
         return "https://linear.app/absoluteio/issue/{$identifier}";
+    }
+
+    private function checkCommsSendApproval(array $data, array $payload): void
+    {
+        // Check if this comment is on a Communications project issue
+        $issueProjectId = $data['issue']['project']['id'] ?? null;
+        if ($issueProjectId !== self::COMMS_PROJECT_ID) {
+            return;
+        }
+
+        $body = strtolower(trim($data['body'] ?? ''));
+        $identifier = $data['issue']['identifier'] ?? 'Unknown';
+        $title = $data['issue']['title'] ?? '';
+        $issueId = $data['issue']['id'] ?? '';
+
+        // Detect approval commands
+        $action = null;
+        if (preg_match('/^send$/i', $body) || preg_match('/^send\s*it$/i', $body) || preg_match('/^approved?$/i', $body) || preg_match('/^lgtm$/i', $body)) {
+            $action = 'send';
+        } elseif (preg_match('/^skip$/i', $body) || preg_match('/^ignore$/i', $body) || preg_match('/^cancel$/i', $body)) {
+            $action = 'skip';
+        } elseif (preg_match('/^research/i', $body)) {
+            $action = 'research';
+        }
+
+        if (!$action) {
+            // Check if it's a custom draft (longer text that isn't a command)
+            if (mb_strlen($data['body'] ?? '') > 10) {
+                $action = 'custom_draft';
+            } else {
+                return;
+            }
+        }
+
+        // Send special signal to #trinity for Trinity to act on
+        $signal = "📬 **COMMS_SEND_SIGNAL**\n";
+        $signal .= "**Action:** {$action}\n";
+        $signal .= "**Issue:** [{$identifier}](<https://linear.app/absoluteio/issue/{$identifier}>)\n";
+        $signal .= "**Title:** {$title}\n";
+        $signal .= "**Issue ID:** {$issueId}\n";
+
+        if ($action === 'custom_draft') {
+            $signal .= "**Custom Draft:**\n> " . ($data['body'] ?? '');
+        }
+
+        $this->sendToDiscordChannel(self::DISCORD_TRINITY_CHANNEL_ID, $signal);
+    }
+
+    private function sendToDiscordChannel(string $channelId, string $message): void
+    {
+        $response = Http::withHeaders([
+            'Authorization' => 'Bot ' . config('services.discord.bot_token'),
+        ])->post("https://discord.com/api/v10/channels/{$channelId}/messages", [
+            'content' => $message,
+        ]);
+
+        if (!$response->successful()) {
+            Log::error('Discord relay failed', [
+                'channel' => $channelId,
+                'status' => $response->status(),
+                'body' => $response->body(),
+            ]);
+        }
     }
 
     private function sendToDiscord(string $message): void
